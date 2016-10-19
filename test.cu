@@ -41,32 +41,33 @@ struct unified_memory_allocator
     }
 };
 
-struct foo { int intVal; double dblVal; };
-
 int main()
 {
     try
     {
-        std::vector<foo, unified_memory_allocator<std::allocator<foo>>> vec(10);
+		auto size = 10;
+        std::vector<int, unified_memory_allocator<std::allocator<int>>> vec(size), target(size);
 
         auto first = vec.data();
         auto last = first + vec.size();
+		auto targetFirst = target.data();
+		auto targetLast = targetFirst + target.size();
 
-        thrust::for_each(thrust::cpp::par,
-            first, last, [](foo &f) { f.intVal = 0; f.dblVal = 1; });
+		thrust::sequence(thrust::cpp::par, first, last);
 
-        thrust::for_each(thrust::cuda::par,
-            first, last, [] __device__ (foo &f) { f.intVal = 2; f.dblVal = 3; });
-        cudaThreadSynchronize();
+		thrust::transform(thrust::cuda::par,
+			thrust::make_counting_iterator(0),
+			thrust::make_counting_iterator(10),
+			targetFirst,
+			[=]__device__(int i)
+			{
+				return *(first + size - i - 1);
+			}
+		);
+		cudaThreadSynchronize();
 
-        thrust::for_each(thrust::cpp::par,
-            first, last,
-            [](const foo &f)
-            {
-                std::cout << "int : " << f.intVal << std::endl
-                    << "dbl : " << f.dblVal << std::endl;
-            }
-        );
+		thrust::copy(thrust::cpp::par, targetFirst, targetLast,
+			std::ostream_iterator<int>(std::cout, " "));
     }
     catch (const std::exception &e)
     {
