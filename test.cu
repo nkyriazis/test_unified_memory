@@ -47,26 +47,26 @@ int main()
 {
     try
     {
-		std::vector<foo, unified_memory_allocator<std::allocator<foo>>> vec(10);
+        std::vector<foo, unified_memory_allocator<std::allocator<foo>>> vec(10);
 
-		auto first = vec.data();
-		auto last = first + vec.size();
+        auto first = vec.data();
+        auto last = first + vec.size();
 
-		thrust::for_each(thrust::cpp::par,
-			first, last, [](foo &f) { f.intVal = 0; f.dblVal = 1; });
+        thrust::for_each(thrust::cpp::par,
+            first, last, [](foo &f) { f.intVal = 0; f.dblVal = 1; });
 
-		thrust::for_each(thrust::cuda::par,
-			first, last, [] __device__ (foo &f) { f.intVal = 2; f.dblVal = 3; });
-		cudaThreadSynchronize();
+        thrust::for_each(thrust::cuda::par,
+            first, last, [] __device__ (foo &f) { f.intVal = 2; f.dblVal = 3; });
+        cudaThreadSynchronize();
 
-		thrust::for_each(thrust::cpp::par,
-			first, last,
-			[](const foo &f)
-			{
-				std::cout << "int : " << f.intVal << std::endl
-					<< "dbl : " << f.dblVal << std::endl;
-			}
-		);
+        thrust::for_each(thrust::cpp::par,
+            first, last,
+            [](const foo &f)
+            {
+                std::cout << "int : " << f.intVal << std::endl
+                    << "dbl : " << f.dblVal << std::endl;
+            }
+        );
     }
     catch (const std::exception &e)
     {
