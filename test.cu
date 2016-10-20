@@ -55,6 +55,11 @@ int main()
 
 		thrust::sequence(thrust::cpp::par, first, last);
 
+		auto every_second = thrust::make_permutation_iterator(first,
+			thrust::make_transform_iterator(thrust::make_counting_iterator(0),
+				[]__device__(int i) { return 2 * i; }));
+		thrust::sequence(thrust::cuda::par, every_second, every_second + 5);
+
 		thrust::transform(thrust::cuda::par,
 			thrust::make_counting_iterator(0),
 			thrust::make_counting_iterator(10),
